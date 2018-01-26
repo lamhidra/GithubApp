@@ -62,8 +62,8 @@
                 card_view:layout_constraintBottom_toBottomOf="parent"
                 card_view:layout_constraintEnd_toStartOf="@+id/tv_numberofstars"
                 card_view:layout_constraintHorizontal_bias="0.0"
-                card_view:layout_constraintStart_toEndOf="@+id/imageView"
-                card_view:layout_constraintTop_toTopOf="@+id/imageView"
+                card_view:layout_constraintStart_toEndOf="@+id/img_avatar"
+                card_view:layout_constraintTop_toTopOf="@+id/img_avatar"
                 card_view:layout_constraintVertical_bias="0.87" />
 
             <ImageView
