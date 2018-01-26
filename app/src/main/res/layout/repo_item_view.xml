@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:padding="8dp"
+    >
+
+    <android.support.v7.widget.CardView xmlns:card_view="http://schemas.android.com/apk/res-auto"
+        android:id="@+id/cv_repoinfo"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        card_view:cardElevation="3dp">
+
+        <android.support.constraint.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="130dp">
+
+            <TextView
+                android:id="@+id/tv_reponame"
+                android:layout_width="wrap_content"
+                android:layout_height="20dp"
+                android:layout_marginEnd="8dp"
+                android:layout_marginStart="8dp"
+                android:layout_marginTop="16dp"
+                android:fontFamily="serif"
+                android:text="Repo Name"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                card_view:layout_constraintEnd_toEndOf="parent"
+                card_view:layout_constraintHorizontal_bias="0.067"
+                card_view:layout_constraintStart_toStartOf="parent"
+                card_view:layout_constraintTop_toTopOf="parent" />
+
+            <TextView
+                android:id="@+id/tv_repodesc"
+                android:layout_width="wrap_content"
+                android:layout_height="17dp"
+                android:layout_margin="12dp"
+                android:layout_marginTop="20dp"
+                android:maxLines="2"
+                android:singleLine="false"
+                android:text="Repo Description"
+                card_view:layout_constraintEnd_toEndOf="@+id/tv_reponame"
+                card_view:layout_constraintHorizontal_bias="0.19"
+                card_view:layout_constraintStart_toStartOf="@+id/tv_reponame"
+                card_view:layout_constraintTop_toBottomOf="@+id/tv_reponame" />
+
+            <TextView
+                android:id="@+id/tv_ownername"
+                android:layout_width="wrap_content"
+                android:layout_height="27dp"
+                android:layout_marginBottom="8dp"
+                android:layout_marginEnd="8dp"
+                android:layout_marginStart="12dp"
+                android:layout_marginTop="8dp"
+                android:text="Repo Owner Name"
+                android:textSize="10sp"
+                android:textStyle="bold"
+                card_view:layout_constraintBottom_toBottomOf="parent"
+                card_view:layout_constraintEnd_toStartOf="@+id/tv_numberofstars"
+                card_view:layout_constraintHorizontal_bias="0.0"
+                card_view:layout_constraintStart_toEndOf="@+id/imageView"
+                card_view:layout_constraintTop_toTopOf="@+id/imageView"
+                card_view:layout_constraintVertical_bias="0.87" />
+
+            <ImageView
+                android:id="@+id/img_avatar"
+                android:layout_width="29dp"
+                android:layout_height="30dp"
+                android:layout_marginBottom="8dp"
+                android:layout_marginTop="8dp"
+                android:src="@drawable/ic_default_photo"
+                card_view:layout_constraintBottom_toBottomOf="parent"
+                card_view:layout_constraintStart_toStartOf="@+id/tv_reponame"
+                card_view:layout_constraintTop_toBottomOf="@+id/tv_repodesc"
+                card_view:layout_constraintVertical_bias="0.73" />
+
+            <TextView
+                android:id="@+id/tv_numberofstars"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                android:layout_marginEnd="48dp"
+                android:layout_marginTop="8dp"
+                android:text="5.1k"
+                card_view:layout_constraintBottom_toBottomOf="parent"
+                card_view:layout_constraintEnd_toEndOf="parent"
+                card_view:layout_constraintTop_toTopOf="@+id/tv_ownername"
+                card_view:layout_constraintVertical_bias="1.0" />
+
+        </android.support.constraint.ConstraintLayout>
+    </android.support.v7.widget.CardView>
+
+</LinearLayout>
