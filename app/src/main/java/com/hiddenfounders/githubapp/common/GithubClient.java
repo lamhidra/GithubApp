@@ -31,7 +31,9 @@ public class GithubClient {
     public static <S> S createService(Class<S> serviceClass) {
         if (!httpClient.interceptors().contains(logging)) {
             httpClient.addInterceptor(logging);
-            builder.client(httpClient.build());
+            builder.client(httpClient
+                    .retryOnConnectionFailure(false)
+                    .build());
             retrofit = builder.build();
         }
         return retrofit.create(serviceClass);

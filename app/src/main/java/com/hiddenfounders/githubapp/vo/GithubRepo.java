@@ -10,6 +10,16 @@ import com.google.gson.annotations.SerializedName;
         primaryKeys = {"id"})
 public class GithubRepo {
 
+    public GithubRepo() {}
+
+    public GithubRepo(long id, String name, String description, double stars) {
+        this.id = id;
+        this.name = name;
+        this.description = description;
+        this.stars = stars;
+        this.owner = new GithubRepoOwner("test", "test");
+    }
+
     @SerializedName("id")
     private long id;
 

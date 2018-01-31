@@ -16,8 +16,4 @@ public class GithubRepoResponse {
     public List<GithubRepo> getGithubRepos() {
         return githubRepos;
     }
-
-    public void setGithubRepos(List<GithubRepo> githubRepos) {
-        this.githubRepos = githubRepos;
-    }
 }

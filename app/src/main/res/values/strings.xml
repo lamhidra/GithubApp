@@ -1,3 +1,10 @@
 <resources>
     <string name="app_name">GithubApp</string>
+
+    <string name="btn_retry">retry</string>
+    <string name="tap_to_reload">Tap to reload</string>
+    <string name="error_msg">Sorry! couldn\'t fetch repositories</string>
+    <string name="error_msg_no_internet"></string>
+    <string name="error_msg_timeout"></string>
+    <string name="error_msg_unknown"></string>
 </resources>

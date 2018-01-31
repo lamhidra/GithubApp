@@ -19,4 +19,7 @@ public interface GithubRepoDao {
 
     @Query("SELECT * FROM repos")
     LiveData<List<GithubRepo>> loadRepos();
+
+    @Query("SELECT COUNT(*) from repos")
+    int reposCount();
 }

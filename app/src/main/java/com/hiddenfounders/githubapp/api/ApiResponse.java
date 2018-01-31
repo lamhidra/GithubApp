@@ -13,6 +13,8 @@ import java.util.regex.Pattern;
 import retrofit2.Response;
 import timber.log.Timber;
 
+
+// move to common
 /**
  * Common class used by API responses.
  * @param <T>

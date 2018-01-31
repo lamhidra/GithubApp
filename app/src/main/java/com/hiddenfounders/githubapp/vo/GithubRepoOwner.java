@@ -5,6 +5,11 @@ import com.google.gson.annotations.SerializedName;
 
 public class GithubRepoOwner {
 
+    public GithubRepoOwner(String ownerName, String avatarUrl) {
+        this.ownerName = ownerName;
+        this.avatarUrl = avatarUrl;
+    }
+
     @SerializedName("login")
     private String ownerName;
 
