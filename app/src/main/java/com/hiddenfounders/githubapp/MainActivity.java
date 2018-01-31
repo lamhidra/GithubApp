@@ -65,11 +65,11 @@ public class MainActivity extends AppCompatActivity
                                     && listResource.data.getGithubRepos().size() == 0)) {
                         showErrorView();
                     } else {
-                        mRecyclerView.setAdapter(
+                        /*mRecyclerView.setAdapter(
                                 new GithubRepoAdapter(listResource.data.getGithubRepos(),
                                         mRecyclerView,
                                         MainActivity.this));
-                        mAdapter.notifyDataSetChanged();
+                        mAdapter.notifyDataSetChanged();*/
                         //Toast.makeText(MainActivity.this, "Couldn't connect to network, Try again", Toast.LENGTH_SHORT).show();
                         // message and show retry footer.
                         //mAdapter.showRetry(true, listResource.message);
