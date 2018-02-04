@@ -28,7 +28,7 @@ A small app that lists the most starred Github repos that were created in the la
 ## Build & Run the application
   Get the source code:
    
-      `git clone https://github.com/lamhidra/GithubApp`.
+      `git clone https://github.com/lamhidra/GithubApp.git`.
    
   .Open the project with Android Studio, let it build the project and hit Run.
   
