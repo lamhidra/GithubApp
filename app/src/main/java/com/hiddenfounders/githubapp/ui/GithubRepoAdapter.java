@@ -11,6 +11,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import com.hiddenfounders.githubapp.R;
 import com.hiddenfounders.githubapp.util.PaginationAdapterCallback;
+import com.hiddenfounders.githubapp.util.PaginationInfo;
 import com.hiddenfounders.githubapp.vo.GithubRepo;
 
 import java.util.List;
@@ -53,9 +54,11 @@ public class GithubRepoAdapter extends
                     int firstVisibleItem = mLayoutManager.findFirstVisibleItemPosition();
                     int itemsCount = getItemCount();
 
-                    if ((itemsCount - firstVisibleItem) == 30) {
+                    if ((itemsCount - firstVisibleItem) == 5) {
                         Log.e("Adapter", "itemCOunt: " + "Load");
-                        ((PaginationAdapterCallback) context).retryPageLoad();
+                        PaginationInfo paginationInfo = new PaginationInfo(30,
+                                GithubRepoAdapter.this.getItemCount());
+                        ((PaginationAdapterCallback) context).loadPage(paginationInfo);
                     }
                 }
             }
@@ -101,7 +104,11 @@ public class GithubRepoAdapter extends
                 } else {
                     errVH.setErrLayoutVisibility(View.GONE);
                     errVH.setPbVisibility(View.VISIBLE);
-                    ((PaginationAdapterCallback) context).retryPageLoad();
+                    LinearLayoutManager mLayoutManager = (LinearLayoutManager) mRecyclerView.getLayoutManager();
+
+                    PaginationInfo paginationInfo = new PaginationInfo(30, GithubRepoAdapter.this.getItemCount());
+                    ((PaginationAdapterCallback) context)
+                            .loadPage(paginationInfo);
                 }
                 break;
         }

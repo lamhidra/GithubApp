@@ -17,6 +17,7 @@ import android.widget.Toast;
 import com.hiddenfounders.githubapp.ui.GithubRepoAdapter;
 import com.hiddenfounders.githubapp.ui.GithubRepoViewModel;
 import com.hiddenfounders.githubapp.util.PaginationAdapterCallback;
+import com.hiddenfounders.githubapp.util.PaginationInfo;
 import com.hiddenfounders.githubapp.vo.GithubRepo;
 import com.hiddenfounders.githubapp.vo.GithubRepoResponse;
 import com.hiddenfounders.githubapp.vo.Resource;
@@ -36,56 +37,48 @@ public class MainActivity extends AppCompatActivity
     private TextView mTextError;
     private GithubRepoViewModel model;
 
+    private boolean isLoading = false;
+    private boolean isConfChange = false;
+    private int count = 0;
+    private int scrolling_position = 0;
+    private static final String ITEMS_COUNT_KEY = "items_count";
+    private static final String LIST_OFFSET_KEY = "list_offset";
+
+
     private Observer<Resource<GithubRepoResponse>> liveReposResponse =
             new Observer<Resource<GithubRepoResponse>>() {
         @Override
         public void onChanged(@Nullable Resource<GithubRepoResponse> listResource) {
-                // Start Loading
 
                 Log.e("MainActivity", "success");
                 if (listResource.status == Status.SUCCESS) {
-                    hideErrorView();
-                    mProgressBar.setVisibility(View.GONE);
-
-                    // Not the first page.
-                    //if (mAdapter.getItemCount() > 0) mAdapter.removeLoadingFooter();
-
-                    // swap adapter
-                    mRecyclerView.setAdapter(
-                            new GithubRepoAdapter(listResource.data.getGithubRepos(),
-                                    mRecyclerView,
-                                    MainActivity.this));
-                    mAdapter.notifyDataSetChanged();
-
-                } else if (listResource.status == Status.ERROR) {
-                    mProgressBar.setVisibility(View.GONE);
-
-                    if (listResource.data == null ||
-                            (listResource.data != null
-                                    && listResource.data.getGithubRepos().size() == 0)) {
-                        showErrorView();
-                    } else {
-                        /*mRecyclerView.setAdapter(
-                                new GithubRepoAdapter(listResource.data.getGithubRepos(),
-                                        mRecyclerView,
-                                        MainActivity.this));
-                        mAdapter.notifyDataSetChanged();*/
-                        //Toast.makeText(MainActivity.this, "Couldn't connect to network, Try again", Toast.LENGTH_SHORT).show();
-                        // message and show retry footer.
-                        //mAdapter.showRetry(true, listResource.message);
+                    // Check if configuration changes and reload again
+                    if (isConfChange) {
+                        PaginationInfo paginationInfo = new PaginationInfo(count, 0);
+                        loadPage(paginationInfo);
+                        isConfChange = false;
+                        return;
                     }
-                } else if (listResource.status == Status.LOADING) {
-                    hideErrorView();
-                    mProgressBar.setVisibility(View.VISIBLE);
 
-                    /*if (listResource.data != null) {
-                        GithubRepoResponse response = listResource.data;
-                        if (response.getGithubRepos().size() == 0)
-                            mProgressBar.setVisibility(View.VISIBLE);
-                    }*/
 
-                    // If recycler view still computing a layout or scrolling this will throw an exception.
-                    // mAdapter.addLoadingFooter();
+                    isLoading = false;
+
+                    // TODO :: change name to attach instead of addAll
+                    mAdapter.addAll(listResource.data.getGithubRepos());
+
+                    Toast.makeText(getApplicationContext(),
+                            "pos: " + scrolling_position, Toast.LENGTH_SHORT).show();
+
+                    if (scrolling_position > 0
+                            && scrolling_position <= mAdapter.getItemCount()) {
+                        mRecyclerView.scrollToPosition(scrolling_position);
+                        scrolling_position = 0;
+                    }
+
+                    // TODO:: swapAdapter and notify dataset changed.
+                } else if (listResource.status == Status.ERROR) {
+                    // TODO:: Check if list is empty (1)
+                    // TODO:: Display the error accordingly to (1). To strategies (Strategy design pattern).
                 }
         }
     };
@@ -104,18 +97,72 @@ public class MainActivity extends AppCompatActivity
         mProgressBar = findViewById(R.id.pb_initial);
         mTextError =   findViewById(R.id.error_txt_cause);
 
+        if (savedInstanceState != null) {
+            count = savedInstanceState.getInt(ITEMS_COUNT_KEY);
+            scrolling_position = savedInstanceState.getInt(LIST_OFFSET_KEY);
+        }
+
         mAdapter = new GithubRepoAdapter(new ArrayList<GithubRepo>(), mRecyclerView, this);
+
+        mRecyclerView.setAdapter(mAdapter);
 
         model = ViewModelProviders.of(this).get(GithubRepoViewModel.class);
 
-        model.LiveRepos.observe(this, liveReposResponse);
+        if (model.getReposListener().getValue() != null) {
+            if (count > model.getReposListener().getValue()
+                    .data.getGithubRepos().size());
+            isConfChange = true;
+        }
 
-        mRecyclerView.setAdapter(mAdapter);
+        model.getReposListener().observe(
+                    this,
+                    liveReposResponse);
+
+
+        Log.e("Mfirst time", "" + model.getReposListener().getValue());
     }
 
     @Override
-    public void retryPageLoad() {
-        model.LiveDataPager.fetchPage(model.getNextPage());
+    public void onStart() {
+        super.onStart();
+
+        // first time
+        if (model.getReposListener().getValue() == null) {
+            PaginationInfo paginationInfo = new PaginationInfo(30, 0);
+            loadPage(paginationInfo);
+        }
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        // Should save ItemsCount and the offset
+
+        // call superclass to save any view hierarchy
+        super.onSaveInstanceState(outState);
+
+        LinearLayoutManager linearLayoutManager =
+                (LinearLayoutManager) mRecyclerView.getLayoutManager();
+
+        outState.putInt(ITEMS_COUNT_KEY, mAdapter.getItemCount());
+        outState.putInt(LIST_OFFSET_KEY,
+                linearLayoutManager.findFirstCompletelyVisibleItemPosition());
+
+    }
+
+    @Override
+    public void loadPage(PaginationInfo paginationInfo)
+    {
+        // One solution is to add it to saveInstanceState
+        if (!isLoading) {
+            isLoading = true;
+            model.getReposPager().fetchNextPage(paginationInfo);
+        }
     }
 
     private void hideErrorView() {
@@ -129,4 +176,5 @@ public class MainActivity extends AppCompatActivity
             mErrorLayout.setVisibility(View.VISIBLE);
         }
     }
+
 }

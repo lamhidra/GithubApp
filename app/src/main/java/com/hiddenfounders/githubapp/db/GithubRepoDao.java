@@ -17,8 +17,8 @@ public interface GithubRepoDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     void InsertRepos(List<GithubRepo> repos);
 
-    @Query("SELECT * FROM repos")
-    LiveData<List<GithubRepo>> loadRepos();
+    @Query("SELECT * FROM repos LIMIT :count OFFSET :offset")
+    LiveData<List<GithubRepo>> loadRepos(int count, int offset);
 
     @Query("SELECT COUNT(*) from repos")
     int reposCount();

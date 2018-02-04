@@ -1,8 +1,6 @@
 package com.hiddenfounders.githubapp.repository;
 
-
 import android.arch.lifecycle.LiveData;
-import android.arch.lifecycle.MutableLiveData;
 import android.arch.lifecycle.Transformations;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -13,15 +11,11 @@ import com.hiddenfounders.githubapp.api.GithubApi;
 import com.hiddenfounders.githubapp.db.GithubRepoDao;
 
 import com.hiddenfounders.githubapp.vo.GithubRepoResponse;
-import com.hiddenfounders.githubapp.vo.Resource;
-
 
 public class GithubRepoRepository {
-
     private final GithubApi githubApi;
     private final AppExecutors appExecutors;
     private final GithubRepoDao repoDao;
-    private static GithubRepoRepository INSTANCE;
 
     public GithubRepoRepository(AppExecutors appExecutors,
                                 GithubApi githubApi,
@@ -36,35 +30,41 @@ public class GithubRepoRepository {
             @NonNull
             @Override
             protected LiveData<GithubRepoResponse> loadFromDb() {
+
+                int count = fetchNextPage().getValue().getCount();
+                int offset = fetchNextPage().getValue().getOffset();
+
                 // load range
-                return Transformations.map(repoDao.loadRepos(), githubRepo ->
+                return Transformations.map(repoDao.loadRepos(count, offset),
+                        githubRepo ->
                     new GithubRepoResponse(githubRepo)
                 );
             }
 
             @Override
             protected boolean shouldFetch(@Nullable GithubRepoResponse data) {
-                return true;
+                return data.getGithubRepos().size() == 0;
             }
 
             @NonNull
             @Override
-            protected LiveData<ApiResponse<GithubRepoResponse>> createCall(int page) {
-                return githubApi.getRepos(page);
-
+            protected LiveData<ApiResponse<GithubRepoResponse>> createCall() {
+                return githubApi.getRepos(getNextPage());
             }
 
             @Override
             protected void saveCallResult(@NonNull GithubRepoResponse repos) {
+                // Add current page for pagination.
                 repoDao.InsertRepos(repos.getGithubRepos());
             }
-        }.initialLoad(1);
+        };
     }
 
     public int getReposCount() {
         return repoDao.reposCount();
     }
+
+    public int getNextPage() {
+        return (getReposCount() / 30) + 1;
+    }
 }
-
-
-

@@ -18,6 +18,8 @@ import com.hiddenfounders.githubapp.vo.Resource;
 
 import java.util.Objects;
 
+import javax.security.auth.callback.Callback;
+
 public abstract class NetworkBoundResource<ResultType, RequestType> {
     private final AppExecutors appExecutors;
 
@@ -28,7 +30,7 @@ public abstract class NetworkBoundResource<ResultType, RequestType> {
     NetworkBoundResource(AppExecutors appExecutors) {
         this.appExecutors = appExecutors;
 
-        this.load.observeForever((page) -> loadData(page));
+        this.load.observeForever((data) -> loadData());
     }
 
     @MainThread
@@ -38,13 +40,14 @@ public abstract class NetworkBoundResource<ResultType, RequestType> {
         }
     }
 
-    private void fetchFromNetwork(final LiveData<ResultType> dbSource, int page) {
-        LiveData<ApiResponse<RequestType>> apiResponse = createCall(page);
+
+    private void fetchFromNetwork(final LiveData<ResultType> dbSource) {
+        LiveData<ApiResponse<RequestType>> apiResponse = createCall();
 
         // we re-attach dbSource as a new source, it will dispatch its latest value quickly
-        //result.addSource(dbSource, newData -> setValue(Resource.loading(newData)));
         result.addSource(apiResponse, response -> {
             result.removeSource(apiResponse);
+            // usefulness !!!
             result.removeSource(dbSource);
             // noinspection ConstantConditions
             if (response.isSuccessful()) {
@@ -59,31 +62,35 @@ public abstract class NetworkBoundResource<ResultType, RequestType> {
                 });
             } else {
                 onFetchFailed();
-                result.addSource(dbSource,  newData -> setValue(Resource.error(response.errorMessage, newData)));
+
+                // We don't have to send data with the error state
+                // dbSource contains the data represented in the UI. loadFromdb() retrieve the new data.
+                result.addSource(dbSource,  newData -> setValue(Resource.error(response.errorMessage, null)));
             }
         });
     }
+
+
 
     protected void onFetchFailed() {
 
     }
 
-    private void loadData(int page) {
-        result.setValue(Resource.loading(null));
+
+    // TODO:: doesn't need to know about page.
+    // TODO Maybe forcing implementing those two callbacks is better.
+    // TODO:: Should accept two callbacks as paramaters. (loadFromDb and createCall)
+    private void loadData() {
         final LiveData<ResultType> dbSource = loadFromDb();
         result.addSource(dbSource, data -> {
             result.removeSource(dbSource);
-            if (shouldFetch(data)) {
-                fetchFromNetwork(dbSource, page);
+            if(shouldFetch(data)) { // Check if database contains data
+                fetchFromNetwork(dbSource);
             } else {
                 result.addSource(dbSource, newData -> setValue(Resource.success(newData)));
             }
+            // Remember to handle Complete state
         });
-    }
-
-    public NetworkBoundResource<ResultType, RequestType> initialLoad(int firstPage) {
-        loadData(firstPage);
-        return this;
     }
 
     public LiveData<Resource<ResultType>> asLiveData() {
@@ -107,7 +114,7 @@ public abstract class NetworkBoundResource<ResultType, RequestType> {
 
     @NonNull
     @MainThread
-    protected abstract LiveData<ApiResponse<RequestType>> createCall(int page);
+    protected abstract LiveData<ApiResponse<RequestType>> createCall();
 
     @WorkerThread
     protected abstract void saveCallResult(@NonNull RequestType item);
