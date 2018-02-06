@@ -1,11 +1,5 @@
 package com.hiddenfounders.githubapp.util;
 
-import android.os.Parcelable;
-
-/**
- * Created by ayoub on 04/02/2018.
- */
-
 public class PaginationInfo {
 
     private int count;

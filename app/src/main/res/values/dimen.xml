@@ -3,4 +3,6 @@
     <dimen name="activity_margin_quarter">12dp</dimen>
     <dimen name="activity_margin_content">12dp</dimen>
     <dimen name="activity_margin">5dp</dimen>
+    <dimen name="activity_margin_half">8dp</dimen>
+
 </resources>

@@ -2,6 +2,7 @@ package com.hiddenfounders.githubapp.ui;
 
 import android.support.annotation.Nullable;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -35,9 +36,15 @@ public class GithubRepoViewHolder
         mDescription.setText(repo.getDescription());
         mOwnerName.setText(repo.getOwner().getOwnerName());
         mStars.setText(String.valueOf(repo.getStars()));
-        Picasso.with(itemView.getContext())
-                .load(repo.getOwner().getAvatarUrl())
-                .into(mOwnerAvatar);
+        try {
+            Picasso.with(itemView.getContext())
+                    .load(repo.getOwner().getAvatarUrl())
+                    .into(mOwnerAvatar);
+        } catch (IllegalArgumentException ex) {
+            // TODO :: tag
+            //Log.e("")
+        }
+
     }
 
 }

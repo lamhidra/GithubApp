@@ -7,12 +7,9 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
-import android.widget.TextView;
-import android.widget.Toast;
 
 import com.hiddenfounders.githubapp.ui.GithubRepoAdapter;
 import com.hiddenfounders.githubapp.ui.GithubRepoViewModel;
@@ -25,8 +22,15 @@ import com.hiddenfounders.githubapp.vo.Status;
 
 import java.util.ArrayList;
 
+
 public class MainActivity extends AppCompatActivity
         implements PaginationAdapterCallback {
+
+    private static final String TAG = MainActivity.class.getSimpleName();
+
+    private static final String ITEMS_COUNT_KEY = "items_count";
+    private static final String LIST_OFFSET_KEY = "list_offset";
+
 
     private RecyclerView mRecyclerView;
     private RecyclerView.LayoutManager mLayoutManager;
@@ -34,51 +38,37 @@ public class MainActivity extends AppCompatActivity
 
     private LinearLayout mErrorLayout;
     private ProgressBar mProgressBar;
-    private TextView mTextError;
-    private GithubRepoViewModel model;
+    private GithubRepoViewModel mRepoViewModel;
 
-    private boolean isLoading = false;
-    private boolean isConfChange = false;
-    private int count = 0;
-    private int scrolling_position = 0;
-    private static final String ITEMS_COUNT_KEY = "items_count";
-    private static final String LIST_OFFSET_KEY = "list_offset";
+    private boolean mIsLoading = false;
+    private int mCount = 0;
+    private int mScrolling_position = 0;
+    private boolean mIsRetrying = false;
 
 
-    private Observer<Resource<GithubRepoResponse>> liveReposResponse =
+    private Observer<Resource<GithubRepoResponse>> mLiveReposResponse =
             new Observer<Resource<GithubRepoResponse>>() {
         @Override
         public void onChanged(@Nullable Resource<GithubRepoResponse> listResource) {
 
-                Log.e("MainActivity", "success");
                 if (listResource.status == Status.SUCCESS) {
-                    // Check if configuration changes and reload again
-                    if (isConfChange) {
-                        PaginationInfo paginationInfo = new PaginationInfo(count, 0);
-                        loadPage(paginationInfo);
-                        isConfChange = false;
-                        return;
-                    }
+                    hideErrorView();
+                    hideProgressBar();
 
-
-                    isLoading = false;
-
-                    // TODO :: change name to attach instead of addAll
                     mAdapter.addAll(listResource.data.getGithubRepos());
 
-                    Toast.makeText(getApplicationContext(),
-                            "pos: " + scrolling_position, Toast.LENGTH_SHORT).show();
-
-                    if (scrolling_position > 0
-                            && scrolling_position <= mAdapter.getItemCount()) {
-                        mRecyclerView.scrollToPosition(scrolling_position);
-                        scrolling_position = 0;
+                    if (mScrolling_position > 0
+                            && mScrolling_position <= mAdapter.getItemCount()) {
+                        mRecyclerView.scrollToPosition(mScrolling_position);
+                        mScrolling_position = 0;
                     }
 
-                    // TODO:: swapAdapter and notify dataset changed.
                 } else if (listResource.status == Status.ERROR) {
-                    // TODO:: Check if list is empty (1)
-                    // TODO:: Display the error accordingly to (1). To strategies (Strategy design pattern).
+                    showErrorView();
+                    hideProgressBar();
+                } else if (listResource.status == Status.LOADING) {
+                    hideErrorView();
+                    displayProgressBar();
                 }
         }
     };
@@ -95,39 +85,32 @@ public class MainActivity extends AppCompatActivity
 
         mErrorLayout = findViewById(R.id.error_layout);
         mProgressBar = findViewById(R.id.pb_initial);
-        mTextError =   findViewById(R.id.error_txt_cause);
 
-        if (savedInstanceState != null) {
-            count = savedInstanceState.getInt(ITEMS_COUNT_KEY);
-            scrolling_position = savedInstanceState.getInt(LIST_OFFSET_KEY);
-        }
 
         mAdapter = new GithubRepoAdapter(new ArrayList<GithubRepo>(), mRecyclerView, this);
 
         mRecyclerView.setAdapter(mAdapter);
 
-        model = ViewModelProviders.of(this).get(GithubRepoViewModel.class);
+        mRepoViewModel = ViewModelProviders.of(this).get(GithubRepoViewModel.class);
 
-        if (model.getReposListener().getValue() != null) {
-            if (count > model.getReposListener().getValue()
-                    .data.getGithubRepos().size());
-            isConfChange = true;
+        if (savedInstanceState != null) {
+            mCount = savedInstanceState.getInt(ITEMS_COUNT_KEY);
+            mScrolling_position = savedInstanceState.getInt(LIST_OFFSET_KEY);
+
+            PaginationInfo paginationInfo = new PaginationInfo(mCount, 0);
+            loadPage(paginationInfo);
         }
 
-        model.getReposListener().observe(
+        mRepoViewModel.getReposListener().observe(
                     this,
-                    liveReposResponse);
+                    mLiveReposResponse);
 
-
-        Log.e("Mfirst time", "" + model.getReposListener().getValue());
     }
 
     @Override
     public void onStart() {
         super.onStart();
-
-        // first time
-        if (model.getReposListener().getValue() == null) {
+        if (mRecyclerView.getAdapter().getItemCount() == 0) {
             PaginationInfo paginationInfo = new PaginationInfo(30, 0);
             loadPage(paginationInfo);
         }
@@ -141,9 +124,6 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public void onSaveInstanceState(Bundle outState) {
-        // Should save ItemsCount and the offset
-
-        // call superclass to save any view hierarchy
         super.onSaveInstanceState(outState);
 
         LinearLayoutManager linearLayoutManager =
@@ -158,22 +138,42 @@ public class MainActivity extends AppCompatActivity
     @Override
     public void loadPage(PaginationInfo paginationInfo)
     {
-        // One solution is to add it to saveInstanceState
-        if (!isLoading) {
-            isLoading = true;
-            model.getReposPager().fetchNextPage(paginationInfo);
+        if (!mIsLoading) mRepoViewModel.getReposPager().loadNextPage(paginationInfo);
+    }
+
+    private void displayProgressBar() {
+        if (!mIsLoading) {
+            if (mAdapter.getItemCount() > 0) mAdapter.addLoadingFooter();
+            else if (mAdapter.getItemCount() == 0) mProgressBar.setVisibility(View.VISIBLE);
+
+            mIsLoading = true;
         }
+
+    }
+
+    private void hideProgressBar() {
+        if (mIsLoading) {
+            mProgressBar.setVisibility(View.INVISIBLE);
+            mAdapter.removeLoadingFooter();
+            mIsLoading = false;
+        }
+
     }
 
     private void hideErrorView() {
-        if (mErrorLayout.getVisibility() == View.VISIBLE) {
+        if (mIsRetrying) {
             mErrorLayout.setVisibility(View.GONE);
+            mAdapter.removeRetryFooter();
+            mIsRetrying = false;
         }
     }
 
     private void showErrorView() {
-        if (mErrorLayout.getVisibility() == View.GONE) {
-            mErrorLayout.setVisibility(View.VISIBLE);
+        if (!mIsRetrying) {
+            if (mAdapter.getItemCount() > 0) mAdapter.addRetryFooter();
+            else if (mAdapter.getItemCount() == 0) mErrorLayout.setVisibility(View.VISIBLE);
+
+            mIsRetrying = true;
         }
     }
 

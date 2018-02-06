@@ -3,6 +3,7 @@ package com.hiddenfounders.githubapp.vo;
 
 import android.arch.persistence.room.Embedded;
 import android.arch.persistence.room.Entity;
+import android.arch.persistence.room.Ignore;
 
 import com.google.gson.annotations.SerializedName;
 
@@ -10,8 +11,11 @@ import com.google.gson.annotations.SerializedName;
         primaryKeys = {"id"})
 public class GithubRepo {
 
-    public GithubRepo() {}
+    public GithubRepo() {
+        this.owner = new GithubRepoOwner("", "");
+    }
 
+    @Ignore
     public GithubRepo(long id, String name, String description, double stars) {
         this.id = id;
         this.name = name;

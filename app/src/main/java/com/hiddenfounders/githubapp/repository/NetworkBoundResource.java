@@ -21,43 +21,50 @@ import java.util.Objects;
 import javax.security.auth.callback.Callback;
 
 public abstract class NetworkBoundResource<ResultType, RequestType> {
-    private final AppExecutors appExecutors;
+    private final AppExecutors mAppExecutors;
 
-    private final MediatorLiveData<Resource<ResultType>> result = new MediatorLiveData<>();
-    private final LiveDataPager load = new LiveDataPager();
+    public final MediatorLiveData<Resource<ResultType>> liveResult = new MediatorLiveData<>();
+    public final LiveDataPager liveDataPager = new LiveDataPager();
 
     @MainThread
     NetworkBoundResource(AppExecutors appExecutors) {
-        this.appExecutors = appExecutors;
+        this.mAppExecutors = appExecutors;
 
-        this.load.observeForever((data) -> loadData());
+        this.liveDataPager.observeForever((data) -> loadData());
     }
 
     @MainThread
     private void setValue(Resource<ResultType> newValue) {
-        if (!Objects.equals(result.getValue(), newValue)) {
-            result.setValue(newValue);
+        if (!Objects.equals(liveResult.getValue(), newValue)) {
+            liveResult.setValue(newValue);
         }
     }
-
 
     private void fetchFromNetwork(final LiveData<ResultType> dbSource) {
         LiveData<ApiResponse<RequestType>> apiResponse = createCall();
 
         // we re-attach dbSource as a new source, it will dispatch its latest value quickly
-        result.addSource(apiResponse, response -> {
-            result.removeSource(apiResponse);
-            // usefulness !!!
-            result.removeSource(dbSource);
-            // noinspection ConstantConditions
+        liveResult.addSource(dbSource, newData -> {
+            liveResult.setValue(Resource.loading(newData));
+            liveResult.removeSource(dbSource);
+        });
+
+        liveResult.addSource(apiResponse, response -> {
+            liveResult.removeSource(apiResponse);
+
             if (response.isSuccessful()) {
-                appExecutors.diskIO().execute(() -> {
+                mAppExecutors.diskIO().execute(() -> {
                     saveCallResult(processResponse(response));
-                    appExecutors.mainThread().execute(() -> {
+                    mAppExecutors.mainThread().execute(() -> {
                         // we specially request a new live data,
                         // otherwise we will get immediately last cached value,
                         // which may not be updated with lasted results received from network.
-                        result.addSource(loadFromDb(), newData -> setValue(Resource.success(newData)));
+                        final LiveData<ResultType> newDbSource = loadFromDb();
+                        liveResult.addSource(newDbSource,
+                                newData -> {
+                                    liveResult.setValue(Resource.success(newData));
+                                    liveResult.removeSource(newDbSource);
+                                });
                     });
                 });
             } else {
@@ -65,7 +72,10 @@ public abstract class NetworkBoundResource<ResultType, RequestType> {
 
                 // We don't have to send data with the error state
                 // dbSource contains the data represented in the UI. loadFromdb() retrieve the new data.
-                result.addSource(dbSource,  newData -> setValue(Resource.error(response.errorMessage, null)));
+                liveResult.addSource(dbSource,  newData -> {
+                    liveResult.setValue(Resource.error(response.errorMessage, null));
+                    liveResult.removeSource(dbSource);
+                });
             }
         });
     }
@@ -76,28 +86,30 @@ public abstract class NetworkBoundResource<ResultType, RequestType> {
 
     }
 
-
     // TODO:: doesn't need to know about page.
     // TODO Maybe forcing implementing those two callbacks is better.
     // TODO:: Should accept two callbacks as paramaters. (loadFromDb and createCall)
     private void loadData() {
+
+        liveResult.setValue(Resource.loading(null));
+
         final LiveData<ResultType> dbSource = loadFromDb();
-        result.addSource(dbSource, data -> {
-            result.removeSource(dbSource);
+
+        liveResult.addSource(dbSource, data -> {
+            liveResult.removeSource(dbSource);
             if(shouldFetch(data)) { // Check if database contains data
                 fetchFromNetwork(dbSource);
             } else {
-                result.addSource(dbSource, newData -> setValue(Resource.success(newData)));
+                liveResult.addSource(dbSource, newData -> {
+                    liveResult.setValue(Resource.success(newData));
+                    liveResult.removeSource(dbSource);
+                });
             }
-            // Remember to handle Complete state
         });
     }
 
     public LiveData<Resource<ResultType>> asLiveData() {
-        return result;
-    }
-    public LiveDataPager fetchNextPage() {
-        return load;
+        return liveResult;
     }
 
     @WorkerThread

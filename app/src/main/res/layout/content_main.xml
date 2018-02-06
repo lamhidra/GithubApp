@@ -9,15 +9,16 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_margin="5dp"
-        android:layout_weight="1"
         android:scrollbars="vertical"
         />
 
     <ProgressBar
         android:id="@+id/pb_initial"
-        android:layout_width="30dp"
-        android:layout_height="30dp"
+        style="@android:style/Widget.Holo.ProgressBar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:layout_gravity="center"
-        android:visibility="gone"/>
+        android:visibility="gone"
+        android:indeterminate="true"/>
     <include layout="@layout/error_layout"/>
 </FrameLayout>
