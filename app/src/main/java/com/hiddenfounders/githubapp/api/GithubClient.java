@@ -1,7 +1,5 @@
-package com.hiddenfounders.githubapp.common;
+package com.hiddenfounders.githubapp.api;
 
-
-import com.hiddenfounders.githubapp.util.LiveDataCallAdapter;
 import com.hiddenfounders.githubapp.util.LiveDataCallAdapterFactory;
 
 import okhttp3.OkHttpClient;

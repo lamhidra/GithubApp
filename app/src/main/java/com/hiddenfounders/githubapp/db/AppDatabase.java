@@ -8,7 +8,7 @@ import android.content.Context;
 
 import com.hiddenfounders.githubapp.vo.GithubRepo;
 
-@Database(entities = {GithubRepo.class}, version = 3)
+@Database(entities = {GithubRepo.class}, version = 6)
 public abstract class AppDatabase extends RoomDatabase{
     public abstract GithubRepoDao githubRepoDao();
 

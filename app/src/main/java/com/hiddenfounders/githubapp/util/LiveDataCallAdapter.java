@@ -2,8 +2,6 @@ package com.hiddenfounders.githubapp.util;
 
 import android.arch.lifecycle.LiveData;
 
-import com.hiddenfounders.githubapp.api.ApiResponse;
-
 import java.lang.reflect.Type;
 import java.util.concurrent.atomic.AtomicBoolean;
 

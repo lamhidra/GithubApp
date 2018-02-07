@@ -11,21 +11,27 @@ import com.hiddenfounders.githubapp.util.LiveDataPager;
 import com.hiddenfounders.githubapp.vo.GithubRepoResponse;
 import com.hiddenfounders.githubapp.vo.Resource;
 
+/**
+ *
+ */
 public class GithubRepoViewModel extends AndroidViewModel {
 
-    private GithubRepoRepository mGithubRepoRepository;
-
     private NetworkBoundResource mRepoManager;
-    public LiveData<Resource<GithubRepoResponse>> liveRepos;
-    public LiveDataPager liveDataPager;
+    private LiveData<Resource<GithubRepoResponse>> liveRepos;
+    private LiveDataPager liveDataPager;
 
     public GithubRepoViewModel(@NonNull Application application) {
         super(application);
 
-        mGithubRepoRepository = new GithubRepoRepository(application);
+
+        GithubRepoRepository mGithubRepoRepository = new GithubRepoRepository(application);
         this.mRepoManager = mGithubRepoRepository.getRepos();
     }
 
+    /**
+     *
+     * @return
+     */
     public LiveData<Resource<GithubRepoResponse>> getReposListener() {
         if (liveRepos == null) {
             liveRepos = mRepoManager.liveResult;
@@ -33,15 +39,14 @@ public class GithubRepoViewModel extends AndroidViewModel {
         return liveRepos;
     }
 
+    /**
+     *
+     * @return
+     */
     public LiveDataPager getReposPager() {
         if (liveDataPager == null) {
             liveDataPager = mRepoManager.liveDataPager;
         }
         return liveDataPager;
-    }
-
-    @Override
-    protected void onCleared() {
-        // repoManager.asLiveData().removeObserver(liveReposResponse);
     }
 }

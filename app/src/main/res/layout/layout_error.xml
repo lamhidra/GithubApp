@@ -5,7 +5,7 @@ android:layout_width="match_parent"
 android:layout_height="match_parent">
 
 <LinearLayout
-    android:id="@+id/error_layout"
+    android:id="@+id/layout_error"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
     android:layout_gravity="center"
@@ -22,7 +22,6 @@ android:layout_height="match_parent">
 
     <!--Displays a reason for the error -->
           <TextView
-              android:id="@+id/error_txt_cause"
               style="@style/TextAppearance.AppCompat.Caption"
               android:layout_width="wrap_content"
               android:layout_height="wrap_content"
@@ -32,7 +31,7 @@ android:layout_height="match_parent">
 
           <!-- —CTA— prompting user to retry failed request>-->
           <Button
-              android:id="@+id/error_btn_retry"
+              android:id="@+id/button_layouterror_retry"
               style="@style/Widget.AppCompat.Button.Borderless"
               android:layout_width="wrap_content"
               android:layout_height="wrap_content"

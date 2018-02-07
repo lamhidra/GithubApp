@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<merge xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_height="match_parent"
     android:layout_width="match_parent">
     <!-- A RecyclerView with some commonly used attributes -->
     <android.support.v7.widget.RecyclerView
-        android:id="@+id/my_recycler_view"
+        android:id="@+id/recyclervie_repos"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_margin="5dp"
@@ -13,12 +13,12 @@
         />
 
     <ProgressBar
-        android:id="@+id/pb_initial"
+        android:id="@+id/progressbar_initial"
         style="@android:style/Widget.Holo.ProgressBar"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
         android:visibility="gone"
         android:indeterminate="true"/>
-    <include layout="@layout/error_layout"/>
-</FrameLayout>
+    <include layout="@layout/layout_error"/>
+</merge>

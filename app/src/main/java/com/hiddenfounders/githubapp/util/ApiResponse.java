@@ -1,4 +1,4 @@
-package com.hiddenfounders.githubapp.api;
+package com.hiddenfounders.githubapp.util;
 
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -51,6 +51,8 @@ public class ApiResponse<T> {
                     message = response.errorBody().string();
                 } catch (IOException ignored) {
                     Timber.e(ignored, "error while parsing response");
+                } catch (NullPointerException ex) {
+                    Timber.e(ex, "error while parsing response");
                 }
             }
             if (message == null || message.trim().length() == 0) {

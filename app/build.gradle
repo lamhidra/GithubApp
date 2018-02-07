@@ -59,7 +59,7 @@ dependencies {
     compile 'com.android.support:recyclerview-v7:26.1.0'
     implementation 'com.jakewharton.timber:timber:4.6.0'
     debugCompile('com.amitshekhar.android:debug-db:1.0.2') {
-        transitive = true;
+        transitive = true
         exclude module: 'gson'
     }
 }

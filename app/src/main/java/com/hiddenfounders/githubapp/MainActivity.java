@@ -1,5 +1,6 @@
 package com.hiddenfounders.githubapp;
 
+import android.arch.lifecycle.MutableLiveData;
 import android.arch.lifecycle.Observer;
 import android.arch.lifecycle.ViewModelProviders;
 import android.support.annotation.Nullable;
@@ -8,6 +9,7 @@ import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
+import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 
@@ -30,10 +32,10 @@ public class MainActivity extends AppCompatActivity
 
     private static final String ITEMS_COUNT_KEY = "items_count";
     private static final String LIST_OFFSET_KEY = "list_offset";
+    private static final int PAGE_SIZE = 30;
 
 
     private RecyclerView mRecyclerView;
-    private RecyclerView.LayoutManager mLayoutManager;
     private GithubRepoAdapter mAdapter;
 
     private LinearLayout mErrorLayout;
@@ -41,20 +43,24 @@ public class MainActivity extends AppCompatActivity
     private GithubRepoViewModel mRepoViewModel;
 
     private boolean mIsLoading = false;
-    private int mCount = 0;
     private int mScrolling_position = 0;
     private boolean mIsRetrying = false;
 
 
+    /**
+     *
+     */
     private Observer<Resource<GithubRepoResponse>> mLiveReposResponse =
             new Observer<Resource<GithubRepoResponse>>() {
         @Override
         public void onChanged(@Nullable Resource<GithubRepoResponse> listResource) {
+                if (listResource == null) return;
 
                 if (listResource.status == Status.SUCCESS) {
                     hideErrorView();
                     hideProgressBar();
 
+                    if (listResource.data == null) return;
                     mAdapter.addAll(listResource.data.getGithubRepos());
 
                     if (mScrolling_position > 0
@@ -78,26 +84,35 @@ public class MainActivity extends AppCompatActivity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        mRecyclerView = findViewById(R.id.my_recycler_view);
+        mRecyclerView = findViewById(R.id.recyclervie_repos);
         mRecyclerView.setHasFixedSize(true);
-        mLayoutManager = new LinearLayoutManager(this);
+
+        RecyclerView.LayoutManager mLayoutManager= new LinearLayoutManager(this);
         mRecyclerView.setLayoutManager(mLayoutManager);
 
-        mErrorLayout = findViewById(R.id.error_layout);
-        mProgressBar = findViewById(R.id.pb_initial);
+        mErrorLayout = findViewById(R.id.layout_error);
+        mProgressBar = findViewById(R.id.progressbar_initial);
+        Button mRetryButton = findViewById(R.id.button_layouterror_retry);
 
+        mRetryButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                PaginationInfo paginationInfo = new PaginationInfo(PAGE_SIZE, 0);
+                loadPage(paginationInfo);
+            }
+        });
 
-        mAdapter = new GithubRepoAdapter(new ArrayList<GithubRepo>(), mRecyclerView, this);
+        mAdapter = new GithubRepoAdapter(this, mRecyclerView, new ArrayList<>());
 
         mRecyclerView.setAdapter(mAdapter);
 
         mRepoViewModel = ViewModelProviders.of(this).get(GithubRepoViewModel.class);
 
         if (savedInstanceState != null) {
-            mCount = savedInstanceState.getInt(ITEMS_COUNT_KEY);
+            int count = savedInstanceState.getInt(ITEMS_COUNT_KEY);
             mScrolling_position = savedInstanceState.getInt(LIST_OFFSET_KEY);
 
-            PaginationInfo paginationInfo = new PaginationInfo(mCount, 0);
+            PaginationInfo paginationInfo = new PaginationInfo(count, 0);
             loadPage(paginationInfo);
         }
 
@@ -135,12 +150,19 @@ public class MainActivity extends AppCompatActivity
 
     }
 
+    /**
+     *
+     * @param paginationInfo
+     */
     @Override
     public void loadPage(PaginationInfo paginationInfo)
     {
         if (!mIsLoading) mRepoViewModel.getReposPager().loadNextPage(paginationInfo);
     }
 
+    /**
+     *
+     */
     private void displayProgressBar() {
         if (!mIsLoading) {
             if (mAdapter.getItemCount() > 0) mAdapter.addLoadingFooter();
@@ -151,6 +173,9 @@ public class MainActivity extends AppCompatActivity
 
     }
 
+    /**
+     *
+     */
     private void hideProgressBar() {
         if (mIsLoading) {
             mProgressBar.setVisibility(View.INVISIBLE);
@@ -160,6 +185,9 @@ public class MainActivity extends AppCompatActivity
 
     }
 
+    /**
+     *
+     */
     private void hideErrorView() {
         if (mIsRetrying) {
             mErrorLayout.setVisibility(View.GONE);
@@ -168,6 +196,9 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
+    /**
+     *
+     */
     private void showErrorView() {
         if (!mIsRetrying) {
             if (mAdapter.getItemCount() > 0) mAdapter.addRetryFooter();
@@ -175,6 +206,7 @@ public class MainActivity extends AppCompatActivity
 
             mIsRetrying = true;
         }
+
     }
 
 }

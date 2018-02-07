@@ -11,19 +11,6 @@ import com.google.gson.annotations.SerializedName;
         primaryKeys = {"id"})
 public class GithubRepo {
 
-    public GithubRepo() {
-        this.owner = new GithubRepoOwner("", "");
-    }
-
-    @Ignore
-    public GithubRepo(long id, String name, String description, double stars) {
-        this.id = id;
-        this.name = name;
-        this.description = description;
-        this.stars = stars;
-        this.owner = new GithubRepoOwner("test", "test");
-    }
-
     @SerializedName("id")
     private long id;
 
@@ -37,7 +24,21 @@ public class GithubRepo {
     private GithubRepoOwner owner;
 
     @SerializedName("stargazers_count")
-    private double stars;
+    private int stars;
+
+
+    public GithubRepo() {
+        this.owner = new GithubRepoOwner("", "");
+    }
+
+
+    public GithubRepo(long id, String name, String description, int stars) {
+        this.id = id;
+        this.name = name;
+        this.description = description;
+        this.stars = stars;
+        this.owner = new GithubRepoOwner("test", "test");
+    }
 
     public long getId() {
         return id;
@@ -63,11 +64,11 @@ public class GithubRepo {
         this.description = description;
     }
 
-    public double getStars() {
+    public int getStars() {
         return stars;
     }
 
-    public void setStars(double stars) {
+    public void setStars(int stars) {
         this.stars = stars;
     }
 
@@ -78,5 +79,4 @@ public class GithubRepo {
     public void setOwner(GithubRepoOwner owner) {
         this.owner = owner;
     }
-
 }

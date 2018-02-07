@@ -4,7 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:showIn="@layout/activity_main"
-    android:id="@+id/main_layiout_id">
+    android:id="@+id/main_layout_id">
 
     <include layout="@layout/content_main" />
 

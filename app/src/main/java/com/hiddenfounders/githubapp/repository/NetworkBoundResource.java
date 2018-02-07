@@ -3,23 +3,29 @@ package com.hiddenfounders.githubapp.repository;
 
 import android.arch.lifecycle.LiveData;
 import android.arch.lifecycle.MediatorLiveData;
-import android.arch.lifecycle.MutableLiveData;
 import android.support.annotation.MainThread;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.WorkerThread;
-import android.util.Log;
-import android.widget.Toast;
 
 import com.hiddenfounders.githubapp.AppExecutors;
-import com.hiddenfounders.githubapp.api.ApiResponse;
+import com.hiddenfounders.githubapp.util.ApiResponse;
 import com.hiddenfounders.githubapp.util.LiveDataPager;
 import com.hiddenfounders.githubapp.vo.Resource;
 
 import java.util.Objects;
 
-import javax.security.auth.callback.Callback;
-
+/**
+ * Provide the capability to implement Offline first
+ * Take the database as the single source of truth ... load the data gradually
+ * Implementing two way communication with the viewmodel through
+ * the reposipru Using two live data instances liveResult
+ * for notifying the view model of new uodats
+ * and the livedatapager for requesting new page.
+ *
+ * @param <ResultType>
+ * @param <RequestType>
+ */
 public abstract class NetworkBoundResource<ResultType, RequestType> {
     private final AppExecutors mAppExecutors;
 
@@ -40,14 +46,21 @@ public abstract class NetworkBoundResource<ResultType, RequestType> {
         }
     }
 
+    /**
+     * Fetch a new page from the network and save it to the database
+     * notify the observers with the new updates. (loading, succes, error)
+     *
+     * @param dbSource
+     */
     private void fetchFromNetwork(final LiveData<ResultType> dbSource) {
         LiveData<ApiResponse<RequestType>> apiResponse = createCall();
 
+        // Todo:: remove this line.
         // we re-attach dbSource as a new source, it will dispatch its latest value quickly
-        liveResult.addSource(dbSource, newData -> {
+        /*liveResult.addSource(dbSource, newData -> {
             liveResult.setValue(Resource.loading(newData));
             liveResult.removeSource(dbSource);
-        });
+        });*/
 
         liveResult.addSource(apiResponse, response -> {
             liveResult.removeSource(apiResponse);
@@ -86,9 +99,11 @@ public abstract class NetworkBoundResource<ResultType, RequestType> {
 
     }
 
-    // TODO:: doesn't need to know about page.
-    // TODO Maybe forcing implementing those two callbacks is better.
-    // TODO:: Should accept two callbacks as paramaters. (loadFromDb and createCall)
+    /**
+     *  database is the single source of truth
+     *  look first into the database
+     *  look for the data in the network if it doesn't exist in the database
+     */
     private void loadData() {
 
         liveResult.setValue(Resource.loading(null));
@@ -108,10 +123,12 @@ public abstract class NetworkBoundResource<ResultType, RequestType> {
         });
     }
 
-    public LiveData<Resource<ResultType>> asLiveData() {
-        return liveResult;
-    }
-
+    /**
+     * Utility method that takes the network response and return the body.
+     *
+     * @param response  Holds the code, data and error message of the network response.
+     * @return The body of the network response.
+     */
     @WorkerThread
     protected RequestType processResponse(ApiResponse<RequestType> response) {
         return response.body;
