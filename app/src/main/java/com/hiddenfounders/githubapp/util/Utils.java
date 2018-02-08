@@ -44,7 +44,6 @@ public class Utils {
     }
 
     public static String formatStars(int stars) {
-        Log.e("stars: ", String.valueOf(stars));
         if (stars >= 1000) {
             String result = String.valueOf(stars / 1000);
             int quotient = (stars % 1000) / 100;

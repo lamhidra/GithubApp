@@ -62,7 +62,7 @@ public class MainActivity extends AppCompatActivity
                     hideProgressBar();
 
                     mAdapter.addAll(listResource.data.getGithubRepos());
-                    mAdapter.notifyDataSetChanged();
+
                     if (mScrolling_position > 0
                             && mScrolling_position <= mAdapter.getItemCount()) {
                         mRecyclerView.scrollToPosition(mScrolling_position);
@@ -130,7 +130,7 @@ public class MainActivity extends AppCompatActivity
     @Override
     public void onStart() {
         super.onStart();
-        if (mAdapter.getItemCount() == 0 && !mIsConf) {
+        if (mAdapter.getItemCount() <= 0 && !mIsConf) {
             PaginationInfo paginationInfo = new PaginationInfo(Utils.PAGE_SIZE, Utils.DEFAULT_STARTING_OFFSET);
             loadPage(paginationInfo);
         }
@@ -165,17 +165,21 @@ public class MainActivity extends AppCompatActivity
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == R.id.action_clear_cache) {
-            mRepoViewModel.deleteAllRepos();
+            if (!mIsLoading && mAdapter.getItemCount() > 0) {
+                hideErrorView();
+                hideProgressBar();
+                mRepoViewModel.deleteAllRepos();
 
-            mAdapter = new GithubRepoAdapter(this, mRecyclerView, new ArrayList<>());
-            mRecyclerView.swapAdapter(mAdapter, true);
+                mAdapter.clear();
 
-            mScrolling_position = 0;
+                mScrolling_position = 0;
+                mRecyclerView.scrollToPosition(mScrolling_position);
 
-            PaginationInfo paginationInfo =
-                    new PaginationInfo(Utils.PAGE_SIZE, Utils.DEFAULT_STARTING_OFFSET);
+                PaginationInfo paginationInfo =
+                        new PaginationInfo(Utils.PAGE_SIZE, Utils.DEFAULT_STARTING_OFFSET);
 
-            mRepoViewModel.getReposPager().loadNextPage(paginationInfo);
+                mRepoViewModel.getReposPager().loadNextPage(paginationInfo);
+            }
             return true;
         } else
             return super.onOptionsItemSelected(item);
@@ -197,7 +201,7 @@ public class MainActivity extends AppCompatActivity
     private void displayProgressBar() {
         if (!mIsLoading) {
             if (mAdapter.getItemCount() > 0) mAdapter.addLoadingFooter();
-            else if (mAdapter.getItemCount() == 0) {
+            else {
                 mRecyclerView.setVisibility(View.GONE);
                 mErrorLayout.setVisibility(View.GONE);
                 mProgressBar.setVisibility(View.VISIBLE);
@@ -244,7 +248,7 @@ public class MainActivity extends AppCompatActivity
     private void showErrorView() {
         if (!mIsRetrying) {
             if (mAdapter.getItemCount() > 0) mAdapter.addRetryFooter();
-            else if (mAdapter.getItemCount() == 0) {
+            else {
                 mRecyclerView.setVisibility(View.GONE);
                 mProgressBar.setVisibility(View.GONE);
                 mErrorLayout.setVisibility(View.VISIBLE);

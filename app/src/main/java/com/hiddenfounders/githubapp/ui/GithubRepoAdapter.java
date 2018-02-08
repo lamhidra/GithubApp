@@ -4,6 +4,7 @@ package com.hiddenfounders.githubapp.ui;
 import android.content.Context;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -12,6 +13,7 @@ import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import com.hiddenfounders.githubapp.MainActivity;
 import com.hiddenfounders.githubapp.R;
 import com.hiddenfounders.githubapp.util.PaginationAdapterCallback;
 import com.hiddenfounders.githubapp.util.PaginationInfo;
@@ -65,7 +67,7 @@ public class GithubRepoAdapter extends
 
                     if ((itemsCount - firstVisibleItem) <= THRESHOLD) {
                         PaginationInfo paginationInfo = new PaginationInfo(Utils.PAGE_SIZE,
-                                GithubRepoAdapter.this.getItemCount() - 1);
+                                GithubRepoAdapter.this.getItemCount());
                         ((PaginationAdapterCallback)
                                 GithubRepoAdapter.this.mContext.get()).loadPage(paginationInfo);
                     }
@@ -107,17 +109,25 @@ public class GithubRepoAdapter extends
 
     @Override
     public int getItemViewType(int position) {
-        return (position == (mRepoList.size() - 1)
+        return (position == (getItemCount() - 1)
                 && (mIsLoading || mRetryDisplayed)) ? (mIsLoading ? LOADING: RETRY) : ITEM;
     }
 
     @Override
     public int getItemCount() {
+
         return mRepoList != null ? mRepoList.size() : 0;
     }
 
-    public void removeAll() {
-        mRepoList.clear();
+    public void clear() {
+        int size = this.mRepoList.size();
+        if (size > 0) {
+            for (int i = 0; i < size; i++) {
+                this.mRepoList.remove(0);
+            }
+
+            this.notifyItemRangeRemoved(0, size);
+        }
     }
 
     /**
@@ -126,7 +136,7 @@ public class GithubRepoAdapter extends
      */
     public void add(GithubRepo repo) {
         mRepoList.add(repo);
-        notifyItemInserted(mRepoList.size() - 1);
+        notifyItemInserted(getItemCount() - 1);
     }
 
     /**
@@ -165,7 +175,7 @@ public class GithubRepoAdapter extends
     public void removeRetryFooter() {
         if (mRetryDisplayed) {
             mRetryDisplayed = false;
-            int position = mRepoList.size() - 1;
+            int position = getItemCount() - 1;
             GithubRepo repo = mRepoList.get(position);
 
             if (repo != null) {
@@ -182,7 +192,8 @@ public class GithubRepoAdapter extends
         if (mIsLoading) {
             mIsLoading = false;
 
-            int position = mRepoList.size() - 1;
+            int position = getItemCount() - 1;
+
             GithubRepo repo = mRepoList.get(position);
 
             if (repo != null) {
@@ -192,16 +203,6 @@ public class GithubRepoAdapter extends
         }
     }
 
-    /**
-     *
-     */
-    public void retryLoadingPage() {
-        if (mRetryDisplayed) {
-            PaginationInfo paginationInfo = new PaginationInfo(Utils.PAGE_SIZE,
-                    GithubRepoAdapter.this.getItemCount() - 1);
-            ((PaginationAdapterCallback) mContext.get()).loadPage(paginationInfo);
-        }
-    }
 
     /**
      *  Provide a reference to the views for each repository item.
@@ -274,7 +275,12 @@ public class GithubRepoAdapter extends
 
         @Override
         public void onClick(View v) {
-            retryLoadingPage();
+            if (mRetryDisplayed && !mIsLoading) {
+                PaginationInfo paginationInfo = new PaginationInfo(Utils.PAGE_SIZE,
+                        getItemCount());
+
+                ((PaginationAdapterCallback) mContext.get()).loadPage(paginationInfo);
+            }
         }
     }
 }
