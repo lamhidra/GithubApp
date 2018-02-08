@@ -34,7 +34,6 @@ public class MainActivity extends AppCompatActivity
 
     private static final String ITEMS_COUNT_KEY = "items_count";
     private static final String LIST_OFFSET_KEY = "list_offset";
-    private static final int PAGE_SIZE = 30;
 
 
     private RecyclerView mRecyclerView;
@@ -105,7 +104,7 @@ public class MainActivity extends AppCompatActivity
         mRetryButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                PaginationInfo paginationInfo = new PaginationInfo(PAGE_SIZE, 0);
+                PaginationInfo paginationInfo = new PaginationInfo(Utils.PAGE_SIZE, Utils.DEFAULT_STARTING_OFFSET);
                 loadPage(paginationInfo);
             }
         });
@@ -167,10 +166,6 @@ public class MainActivity extends AppCompatActivity
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == R.id.action_clear_cache) {
             mRepoViewModel.deleteAllRepos();
-
-
-            /*mAdapter.removeAll();
-            mAdapter.notifyDataSetChanged();*/
 
             mAdapter = new GithubRepoAdapter(this, mRecyclerView, new ArrayList<>());
             mRecyclerView.swapAdapter(mAdapter, true);
