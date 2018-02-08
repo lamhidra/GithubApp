@@ -58,7 +58,7 @@ public class GithubRepoAdapter extends
             public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
                 super.onScrolled(recyclerView, dx, dy);
 
-                if (dy > 0 && !mRetryDisplayed) {
+                if (dy > 0 && !mRetryDisplayed && !mIsLoading) {
                     LinearLayoutManager mLayoutManager = (LinearLayoutManager) mRecyclerView.getLayoutManager();
                     int firstVisibleItem = mLayoutManager.findFirstVisibleItemPosition();
                     int itemsCount = getItemCount();

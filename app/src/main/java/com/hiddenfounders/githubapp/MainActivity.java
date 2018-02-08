@@ -56,16 +56,14 @@ public class MainActivity extends AppCompatActivity
             new Observer<Resource<GithubRepoResponse>>() {
         @Override
         public void onChanged(@Nullable Resource<GithubRepoResponse> listResource) {
-                if (listResource == null) return;
 
                 if (listResource.status == Status.SUCCESS) {
                     mRecyclerView.setVisibility(View.VISIBLE);
                     hideErrorView();
                     hideProgressBar();
 
-                    if (listResource.data == null) return;
                     mAdapter.addAll(listResource.data.getGithubRepos());
-
+                    mAdapter.notifyDataSetChanged();
                     if (mScrolling_position > 0
                             && mScrolling_position <= mAdapter.getItemCount()) {
                         mRecyclerView.scrollToPosition(mScrolling_position);
@@ -87,8 +85,8 @@ public class MainActivity extends AppCompatActivity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        Toolbar myToolbar = (Toolbar) findViewById(R.id.my_toolbar);
-        setSupportActionBar(myToolbar);
+        Toolbar mainToolbar = findViewById(R.id.toolbar_main_repos);
+        setSupportActionBar(mainToolbar);
 
         mRecyclerView = findViewById(R.id.recyclervie_repos);
         mRecyclerView.setHasFixedSize(true);
@@ -100,6 +98,10 @@ public class MainActivity extends AppCompatActivity
         mProgressBar = findViewById(R.id.progressbar_initial);
         Button mRetryButton = findViewById(R.id.button_layouterror_retry);
 
+        mAdapter = new GithubRepoAdapter(this, mRecyclerView, new ArrayList<>());
+
+        mRecyclerView.setAdapter(mAdapter);
+
         mRetryButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -107,10 +109,6 @@ public class MainActivity extends AppCompatActivity
                 loadPage(paginationInfo);
             }
         });
-
-        mAdapter = new GithubRepoAdapter(this, mRecyclerView, new ArrayList<>());
-
-        mRecyclerView.setAdapter(mAdapter);
 
         mRepoViewModel = ViewModelProviders.of(this).get(GithubRepoViewModel.class);
 
@@ -171,11 +169,13 @@ public class MainActivity extends AppCompatActivity
             mRepoViewModel.deleteAllRepos();
 
 
-            mAdapter.removeAll();
-            mAdapter.notifyDataSetChanged();
+            /*mAdapter.removeAll();
+            mAdapter.notifyDataSetChanged();*/
+
+            mAdapter = new GithubRepoAdapter(this, mRecyclerView, new ArrayList<>());
+            mRecyclerView.swapAdapter(mAdapter, true);
 
             mScrolling_position = 0;
-            mRecyclerView.scrollToPosition(mScrolling_position);
 
             PaginationInfo paginationInfo =
                     new PaginationInfo(Utils.PAGE_SIZE, Utils.DEFAULT_STARTING_OFFSET);
@@ -193,7 +193,7 @@ public class MainActivity extends AppCompatActivity
     @Override
     public void loadPage(PaginationInfo paginationInfo)
     {
-        if (!mIsLoading) mRepoViewModel.getReposPager().loadNextPage(paginationInfo);
+        if (!mIsLoading ) mRepoViewModel.getReposPager().loadNextPage(paginationInfo);
     }
 
     /**
@@ -219,8 +219,11 @@ public class MainActivity extends AppCompatActivity
      */
     private void hideProgressBar() {
         if (mIsLoading) {
-            mProgressBar.setVisibility(View.GONE);
-            mAdapter.removeLoadingFooter();
+            if (mAdapter.getItemCount() > 0) {
+                mAdapter.removeLoadingFooter();
+            } else
+                mProgressBar.setVisibility(View.GONE);
+
             mIsLoading = false;
         }
 
@@ -231,8 +234,11 @@ public class MainActivity extends AppCompatActivity
      */
     private void hideErrorView() {
         if (mIsRetrying) {
-            mErrorLayout.setVisibility(View.GONE);
-            mAdapter.removeRetryFooter();
+            if (mAdapter.getItemCount() > 0) {
+                mAdapter.removeRetryFooter();
+            } else
+                mErrorLayout.setVisibility(View.GONE);
+
             mIsRetrying = false;
         }
     }
