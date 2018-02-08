@@ -4,6 +4,10 @@ package com.hiddenfounders.githubapp.vo;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
+/**
+ * a generic class that describes a data with a status
+ * @param <T>
+ */
 public class Resource<T> {
 
     @NonNull

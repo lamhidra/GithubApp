@@ -16,20 +16,16 @@ import com.hiddenfounders.githubapp.vo.Resource;
 import java.util.Objects;
 
 /**
- * Provide the capability to implement Offline first
- * Take the database as the single source of truth ... load the data gradually
- * Implementing two way communication with the viewmodel through
- * the reposipru Using two live data instances liveResult
- * for notifying the view model of new uodats
- * and the livedatapager for requesting new page.
+ * A generic class that can provide a resource backed by both a Local data source and the network.
  *
- * @param <ResultType>
- * @param <RequestType>
+ * @param <ResultType> Type for the Resource data
+ * @param <RequestType> Type for the API response
  */
 public abstract class NetworkBoundResource<ResultType, RequestType> {
     private final AppExecutors mAppExecutors;
 
     public final MediatorLiveData<Resource<ResultType>> liveResult = new MediatorLiveData<>();
+
     public final LiveDataPager liveDataPager = new LiveDataPager();
 
     @MainThread
@@ -47,20 +43,11 @@ public abstract class NetworkBoundResource<ResultType, RequestType> {
     }
 
     /**
-     * Fetch a new page from the network and save it to the database
-     * notify the observers with the new updates. (loading, succes, error)
-     *
-     * @param dbSource
-     */
-    private void fetchFromNetwork(final LiveData<ResultType> dbSource) {
+     * Fetches data from the network and save it to the local data source.
+     * Returns the response if the network is reachable or error if is not.
+     * */
+    private void fetchFromNetwork() {
         LiveData<ApiResponse<RequestType>> apiResponse = createCall();
-
-        // Todo:: remove this line.
-        // we re-attach dbSource as a new source, it will dispatch its latest value quickly
-        /*liveResult.addSource(dbSource, newData -> {
-            liveResult.setValue(Resource.loading(newData));
-            liveResult.removeSource(dbSource);
-        });*/
 
         liveResult.addSource(apiResponse, response -> {
             liveResult.removeSource(apiResponse);
@@ -72,23 +59,18 @@ public abstract class NetworkBoundResource<ResultType, RequestType> {
                         // we specially request a new live data,
                         // otherwise we will get immediately last cached value,
                         // which may not be updated with lasted results received from network.
-                        final LiveData<ResultType> newDbSource = loadFromDb();
+                        final LiveData<ResultType> newDbSource = loadFromLocalDS();
                         liveResult.addSource(newDbSource,
                                 newData -> {
-                                    liveResult.setValue(Resource.success(newData));
+                                    setValue(Resource.success(newData));
                                     liveResult.removeSource(newDbSource);
                                 });
                     });
                 });
             } else {
                 onFetchFailed();
+                setValue(Resource.error(response.errorMessage, null));
 
-                // We don't have to send data with the error state
-                // dbSource contains the data represented in the UI. loadFromdb() retrieve the new data.
-                liveResult.addSource(dbSource,  newData -> {
-                    liveResult.setValue(Resource.error(response.errorMessage, null));
-                    liveResult.removeSource(dbSource);
-                });
             }
         });
     }
@@ -100,23 +82,22 @@ public abstract class NetworkBoundResource<ResultType, RequestType> {
     }
 
     /**
-     *  database is the single source of truth
-     *  look first into the database
-     *  look for the data in the network if it doesn't exist in the database
+     * Tries to load data from the local data source and checks whether the result is good enough
+     * to be dispatched or it should be fetched from the network.
      */
     private void loadData() {
 
         liveResult.setValue(Resource.loading(null));
 
-        final LiveData<ResultType> dbSource = loadFromDb();
+        final LiveData<ResultType> dbSource = loadFromLocalDS();
 
         liveResult.addSource(dbSource, data -> {
             liveResult.removeSource(dbSource);
-            if(shouldFetch(data)) { // Check if database contains data
-                fetchFromNetwork(dbSource);
+            if(shouldFetch(data)) {
+                fetchFromNetwork();
             } else {
                 liveResult.addSource(dbSource, newData -> {
-                    liveResult.setValue(Resource.success(newData));
+                    setValue(Resource.success(newData));
                     liveResult.removeSource(dbSource);
                 });
             }
@@ -134,17 +115,34 @@ public abstract class NetworkBoundResource<ResultType, RequestType> {
         return response.body;
     }
 
+    /**
+     * Loads data from the local data source.
+     * @return LiveData That notifies observers when the data is available.
+     */
     @NonNull
     @MainThread
-    protected abstract LiveData<ResultType> loadFromDb();
+    protected abstract LiveData<ResultType> loadFromLocalDS();
 
+    /**
+     * Checks if the data loaded from the local data source meets certain conditions.
+     * @param data the data loaded from the local data source.
+     * @return True or False.
+     */
     @MainThread
     protected abstract boolean shouldFetch(@Nullable ResultType data);
 
+    /**
+     * Responsible for creating a remote server call.
+     *
+     * @return LiveData
+     */
     @NonNull
     @MainThread
     protected abstract LiveData<ApiResponse<RequestType>> createCall();
 
+    /**
+     * Saves the data fetched from the network to the local data source,
+     */
     @WorkerThread
     protected abstract void saveCallResult(@NonNull RequestType item);
 

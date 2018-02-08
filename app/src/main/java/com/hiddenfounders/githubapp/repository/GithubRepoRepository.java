@@ -20,9 +20,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 /**
- * Works as a mediator between the viewmodels and datasources
- * It abstract the access to data from the viewmodel
- *
+ * Works as a mediator between the viewmodels and the datasources
  */
 public class GithubRepoRepository {
     private final GithubApi mGithubApi;
@@ -38,7 +36,7 @@ public class GithubRepoRepository {
     }
 
     /**
-     * Gets github repositories from data source.
+     * Gets github repositories from the local database or from the github api.
      *
      * @return A new Instance of NetworkBoundResource.
      */
@@ -49,11 +47,11 @@ public class GithubRepoRepository {
              * Query the database asynchronously for a specific range of data.
              * The query result always counts between 0 and 30 items.
              *
-             * @return An observable used to subscribe to get database results.
+             * @return An observable that notify the subscribed observers of new updates.
              */
             @NonNull
             @Override
-            protected LiveData<GithubRepoResponse> loadFromDb() {
+            protected LiveData<GithubRepoResponse> loadFromLocalDS() {
 
                 int count = liveDataPager.getValue() != null ?
                         liveDataPager.getValue().getCount() : Utils.PAGE_SIZE;
@@ -70,7 +68,7 @@ public class GithubRepoRepository {
              * Use the query result returned from the database to decide
              * whether or not to look for the next page from the network.
              *
-             * @param data The database query result (loadFromDb).
+             * @param data The database query result (loadFromDb()).
              * @return False or True.
              */
             @Override
@@ -78,11 +76,7 @@ public class GithubRepoRepository {
                 return (data.getGithubRepos() != null) && (data.getGithubRepos().size() == 0);
             }
 
-            /**
-             *
-             *
-             * @return livedata
-             */
+
             @NonNull
             @Override
             protected LiveData<ApiResponse<GithubRepoResponse>> createCall() {
@@ -90,7 +84,7 @@ public class GithubRepoRepository {
             }
 
             /**
-             * Saves the list of repositories into the database.
+             * Saves the new list of repositories into the database.
              *
              * @param repos The list of repositories retrieved from the network.
              */
@@ -101,11 +95,9 @@ public class GithubRepoRepository {
         };
     }
 
-    /**
-     * Query the database for the number of repositories.
-     *
-     * @return The number of repositories stored in the database.
-     */
+    public void deleteAllRepos()  { mRepoDao.deleteAllRepos(); }
+
+
     private int getReposCount() {
         return mRepoDao.reposCount();
     }

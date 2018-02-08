@@ -116,6 +116,10 @@ public class GithubRepoAdapter extends
         return mRepoList != null ? mRepoList.size() : 0;
     }
 
+    public void removeAll() {
+        mRepoList.clear();
+    }
+
     /**
      *
      * @param repo

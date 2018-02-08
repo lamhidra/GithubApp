@@ -1,6 +1,5 @@
 package com.hiddenfounders.githubapp;
 
-import android.arch.lifecycle.MutableLiveData;
 import android.arch.lifecycle.Observer;
 import android.arch.lifecycle.ViewModelProviders;
 import android.support.annotation.Nullable;
@@ -8,6 +7,9 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.Toolbar;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.LinearLayout;
@@ -17,7 +19,7 @@ import com.hiddenfounders.githubapp.ui.GithubRepoAdapter;
 import com.hiddenfounders.githubapp.ui.GithubRepoViewModel;
 import com.hiddenfounders.githubapp.util.PaginationAdapterCallback;
 import com.hiddenfounders.githubapp.util.PaginationInfo;
-import com.hiddenfounders.githubapp.vo.GithubRepo;
+import com.hiddenfounders.githubapp.util.Utils;
 import com.hiddenfounders.githubapp.vo.GithubRepoResponse;
 import com.hiddenfounders.githubapp.vo.Resource;
 import com.hiddenfounders.githubapp.vo.Status;
@@ -45,7 +47,7 @@ public class MainActivity extends AppCompatActivity
     private boolean mIsLoading = false;
     private int mScrolling_position = 0;
     private boolean mIsRetrying = false;
-
+    private boolean mIsConf = false;
 
     /**
      *
@@ -57,6 +59,7 @@ public class MainActivity extends AppCompatActivity
                 if (listResource == null) return;
 
                 if (listResource.status == Status.SUCCESS) {
+                    mRecyclerView.setVisibility(View.VISIBLE);
                     hideErrorView();
                     hideProgressBar();
 
@@ -83,6 +86,9 @@ public class MainActivity extends AppCompatActivity
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        Toolbar myToolbar = (Toolbar) findViewById(R.id.my_toolbar);
+        setSupportActionBar(myToolbar);
 
         mRecyclerView = findViewById(R.id.recyclervie_repos);
         mRecyclerView.setHasFixedSize(true);
@@ -112,8 +118,10 @@ public class MainActivity extends AppCompatActivity
             int count = savedInstanceState.getInt(ITEMS_COUNT_KEY);
             mScrolling_position = savedInstanceState.getInt(LIST_OFFSET_KEY);
 
-            PaginationInfo paginationInfo = new PaginationInfo(count, 0);
+            PaginationInfo paginationInfo = new PaginationInfo(count, Utils.DEFAULT_STARTING_OFFSET);
             loadPage(paginationInfo);
+
+            mIsConf = true;
         }
 
         mRepoViewModel.getReposListener().observe(
@@ -125,8 +133,8 @@ public class MainActivity extends AppCompatActivity
     @Override
     public void onStart() {
         super.onStart();
-        if (mRecyclerView.getAdapter().getItemCount() == 0) {
-            PaginationInfo paginationInfo = new PaginationInfo(30, 0);
+        if (mAdapter.getItemCount() == 0 && !mIsConf) {
+            PaginationInfo paginationInfo = new PaginationInfo(Utils.PAGE_SIZE, Utils.DEFAULT_STARTING_OFFSET);
             loadPage(paginationInfo);
         }
     }
@@ -150,6 +158,34 @@ public class MainActivity extends AppCompatActivity
 
     }
 
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_main, menu);
+
+        return super.onCreateOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (item.getItemId() == R.id.action_clear_cache) {
+            mRepoViewModel.deleteAllRepos();
+
+
+            mAdapter.removeAll();
+            mAdapter.notifyDataSetChanged();
+
+            mScrolling_position = 0;
+            mRecyclerView.scrollToPosition(mScrolling_position);
+
+            PaginationInfo paginationInfo =
+                    new PaginationInfo(Utils.PAGE_SIZE, Utils.DEFAULT_STARTING_OFFSET);
+
+            mRepoViewModel.getReposPager().loadNextPage(paginationInfo);
+            return true;
+        } else
+            return super.onOptionsItemSelected(item);
+    }
+
     /**
      *
      * @param paginationInfo
@@ -166,7 +202,12 @@ public class MainActivity extends AppCompatActivity
     private void displayProgressBar() {
         if (!mIsLoading) {
             if (mAdapter.getItemCount() > 0) mAdapter.addLoadingFooter();
-            else if (mAdapter.getItemCount() == 0) mProgressBar.setVisibility(View.VISIBLE);
+            else if (mAdapter.getItemCount() == 0) {
+                mRecyclerView.setVisibility(View.GONE);
+                mErrorLayout.setVisibility(View.GONE);
+                mProgressBar.setVisibility(View.VISIBLE);
+            }
+
 
             mIsLoading = true;
         }
@@ -178,7 +219,7 @@ public class MainActivity extends AppCompatActivity
      */
     private void hideProgressBar() {
         if (mIsLoading) {
-            mProgressBar.setVisibility(View.INVISIBLE);
+            mProgressBar.setVisibility(View.GONE);
             mAdapter.removeLoadingFooter();
             mIsLoading = false;
         }
@@ -202,7 +243,11 @@ public class MainActivity extends AppCompatActivity
     private void showErrorView() {
         if (!mIsRetrying) {
             if (mAdapter.getItemCount() > 0) mAdapter.addRetryFooter();
-            else if (mAdapter.getItemCount() == 0) mErrorLayout.setVisibility(View.VISIBLE);
+            else if (mAdapter.getItemCount() == 0) {
+                mRecyclerView.setVisibility(View.GONE);
+                mProgressBar.setVisibility(View.GONE);
+                mErrorLayout.setVisibility(View.VISIBLE);
+            }
 
             mIsRetrying = true;
         }

@@ -12,25 +12,24 @@ import com.hiddenfounders.githubapp.vo.GithubRepoResponse;
 import com.hiddenfounders.githubapp.vo.Resource;
 
 /**
- *
+ * Holds and manages the observables (LiveData),persisting them over activity configuration changes.
  */
 public class GithubRepoViewModel extends AndroidViewModel {
 
     private NetworkBoundResource mRepoManager;
     private LiveData<Resource<GithubRepoResponse>> liveRepos;
     private LiveDataPager liveDataPager;
+    private GithubRepoRepository mGithubRepoRepository;
 
     public GithubRepoViewModel(@NonNull Application application) {
         super(application);
-
-
-        GithubRepoRepository mGithubRepoRepository = new GithubRepoRepository(application);
+        mGithubRepoRepository = new GithubRepoRepository(application);
         this.mRepoManager = mGithubRepoRepository.getRepos();
     }
 
     /**
-     *
-     * @return
+     * Notify the UI for new updates.
+     * @return LiveData A observable
      */
     public LiveData<Resource<GithubRepoResponse>> getReposListener() {
         if (liveRepos == null) {
@@ -40,13 +39,18 @@ public class GithubRepoViewModel extends AndroidViewModel {
     }
 
     /**
-     *
-     * @return
+     * Used to query the data sources for new pages.
+     * @return LivaDataPager an observable
      */
     public LiveDataPager getReposPager() {
         if (liveDataPager == null) {
             liveDataPager = mRepoManager.liveDataPager;
         }
         return liveDataPager;
+    }
+
+    public void deleteAllRepos() {
+        mGithubRepoRepository.deleteAllRepos();
+        
     }
 }
