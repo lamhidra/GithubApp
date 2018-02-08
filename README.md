@@ -1,5 +1,5 @@
 # HiddenFounders Mobile Coding Challenge
-###### HiddenFounders Android Coding Challenge.
+###### HiddenFounders Android Coding Challenge. [link](https://github.com/hiddenfounders/mobile-coding-challenge)
 
 ## Overview:
 
@@ -32,4 +32,6 @@ A small app that lists the most starred Github repos that were created in the la
    
   .Open the project with Android Studio, let it build the project and hit Run.
   
-  .For database debugging use the instructions in the following link https://github.com/amitshekhariitbhu/Android-Debug-Database.
+  .For database debugging using the android default emulator run the command in the terminal - `adb forward tcp:8080 tcp:8080`
+  and open `http://localhost:8080`.
+    for more details visit: https://github.com/amitshekhariitbhu/Android-Debug-Database.
